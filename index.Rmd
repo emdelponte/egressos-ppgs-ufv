@@ -1,0 +1,85 @@
+---
+title: "Base de dados de Egressos - Programa A UFV"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    theme: yeti
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(ggthemes)
+library(crosstalk)
+library(janitor)
+library(DT)
+library(readxl)
+Sys.setlocale("LC_ALL", "pt_BR.UTF-8")
+
+dat0 <- read_excel("egressos.xlsx")
+
+dat1 <- dat0 %>% 
+  select(Nome, Nível, Orientador, `Ano de defesa`, `Vínculo atual`, País) 
+sd <- SharedData$new(dat1)
+
+```
+
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Planilha interativa
+
+```{r}
+bscols(
+ filter_slider("Ano de defesa", "Restringe aos anos", sd, ~`Ano de defesa`,
+              round = TRUE),
+
+filter_select("orientador", "Orientador", sd, ~Orientador,
+              multiple = FALSE))
+
+ datatable(sd, rownames = FALSE,
+           extensions = c("Buttons"),
+             class = 'table-bordered table-condensed',
+           options = list(
+    dom = "Bfrtip", buttons = c("excel")))
+           
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Defesas/ano/nível
+
+```{r}
+library(cowplot)
+dat1 %>%
+  group_by(`Ano de defesa`, Nível) %>% 
+    ggplot(aes(`Ano de defesa`, fill = Nível))+
+             geom_bar()+
+  scale_fill_few()+
+  theme_minimal_hgrid()+
+  labs(y = "Frequência")
+  
+
+```
+
+### Defesas/orientador
+
+```{r}
+
+library(cowplot)
+dat1 %>%
+  group_by(Orientador, Nível) %>% 
+    ggplot(aes(Orientador, fill = Nível))+
+             geom_bar()+
+scale_fill_few()+
+  theme_minimal_vgrid()+
+  coord_flip()+
+  labs(y = "Frequência", x = "")
+  
+
+```
+```
+
